@@ -38,7 +38,7 @@ namespace Veikka_Honkanen_LibraryApi.Models
         [Required]
         public string Manufacturer { get; set; }
 
-        public ICollection<string> AdditionalInformations { get; set; }
+        public string AdditionalInformation { get; set; }
 
         public string Isbn { get; set; }
 
