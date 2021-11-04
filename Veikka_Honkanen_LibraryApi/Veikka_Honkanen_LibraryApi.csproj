@@ -23,4 +23,9 @@
     <PackageReference Include="Swashbuckle.AspNetCore.Swagger" Version="6.2.3" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="DataTransferObjects\Incoming\" />
+    <Folder Include="DataTransferObjects\Outgoing\" />
+  </ItemGroup>
+
 </Project>
