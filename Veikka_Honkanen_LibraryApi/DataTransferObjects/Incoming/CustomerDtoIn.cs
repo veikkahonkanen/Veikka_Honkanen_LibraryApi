@@ -37,8 +37,8 @@ namespace Veikka_Honkanen_LibraryApi.DataTransferObjects.Incoming
         public CustomerDtoInProfile()
         {
             CreateMap<CustomerDtoIn, Customer>()
-                .ForMember(customer => customer.Person.FirstName, s => s.MapFrom(customerDto => customerDto.FirstName))
-                .ForMember(customer => customer.Person.LastName, s => s.MapFrom(customerDto => customerDto.LastName));
+                .ForPath(customer => customer.Person.FirstName, s => s.MapFrom(customerDto => customerDto.FirstName))
+                .ForPath(customer => customer.Person.LastName, s => s.MapFrom(customerDto => customerDto.LastName));
         }
     }
 }
