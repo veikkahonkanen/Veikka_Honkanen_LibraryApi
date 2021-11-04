@@ -31,6 +31,7 @@ namespace Veikka_Honkanen_LibraryApi.Controllers
         {
             return await _context.Customers
                 .Include(customer => customer.Person)?
+                .Include(customer => customer.Loans)?
                 .ProjectTo<CustomerDtoOut>(_mapper.ConfigurationProvider)
                 .ToListAsync();
         }

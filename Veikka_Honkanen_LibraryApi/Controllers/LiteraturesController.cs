@@ -2,9 +2,13 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using AutoMapper;
+using AutoMapper.QueryableExtensions;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Veikka_Honkanen_LibraryApi.DataTransferObjects.Incoming;
+using Veikka_Honkanen_LibraryApi.DataTransferObjects.Outgoing;
 using Veikka_Honkanen_LibraryApi.Models;
 
 namespace Veikka_Honkanen_LibraryApi.Controllers
@@ -14,24 +18,36 @@ namespace Veikka_Honkanen_LibraryApi.Controllers
     public class LiteraturesController : ControllerBase
     {
         private readonly LibraryContext _context;
+        private readonly IMapper _mapper;
 
-        public LiteraturesController(LibraryContext context)
+        public LiteraturesController(LibraryContext context, IMapper mapper)
         {
             _context = context;
+            _mapper = mapper;
         }
 
         // GET: api/Literatures
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Literature>>> GetLiteratures()
+        public async Task<ActionResult<IEnumerable<LiteratureDtoOut>>> GetLiteratures()
         {
-            return await _context.Literatures.ToListAsync();
+            return await _context.Literatures
+                .Include(literature => literature.Authors).ThenInclude(author => author.Person)
+                .Include(literature => literature.Publisher)
+                .Include(literature => literature.Subjects)
+                .ProjectTo<LiteratureDtoOut>(_mapper.ConfigurationProvider)
+                .ToListAsync();
         }
 
         // GET: api/Literatures/5
         [HttpGet("{id}")]
-        public async Task<ActionResult<Literature>> GetLiterature(long id)
+        public async Task<ActionResult<LiteratureDtoOut>> GetLiterature(long id)
         {
-            var literature = await _context.Literatures.FindAsync(id);
+            var literature = await _context.Literatures
+                .Include(literature => literature.Authors).ThenInclude(author => author.Person)
+                .Include(literature => literature.Publisher)
+                .Include(literature => literature.Subjects)
+                .ProjectTo<LiteratureDtoOut>(_mapper.ConfigurationProvider)
+                .SingleOrDefaultAsync(literature => literature.Id == id);
 
             if (literature == null)
             {
@@ -44,17 +60,19 @@ namespace Veikka_Honkanen_LibraryApi.Controllers
         // PUT: api/Literatures/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutLiterature(long id, Literature literature)
+        public async Task<IActionResult> PutLiterature(long id, LiteratureDtoIn literature)
         {
             if (id != literature.Id)
             {
                 return BadRequest();
             }
 
-            _context.Entry(literature).State = EntityState.Modified;
-
             try
             {
+                var literatureEntity = await _context.Literatures.FindAsync(id);
+
+                literatureEntity = _mapper.Map(literature, literatureEntity);
+
                 await _context.SaveChangesAsync();
             }
             catch (DbUpdateConcurrencyException)
@@ -75,12 +93,14 @@ namespace Veikka_Honkanen_LibraryApi.Controllers
         // POST: api/Literatures
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
-        public async Task<ActionResult<Literature>> PostLiterature(Literature literature)
+        public async Task<ActionResult<Literature>> PostLiterature(LiteratureDtoIn literature)
         {
-            _context.Literatures.Add(literature);
+            var entityLiterature = _mapper.Map<Literature>(literature);
+
+            _context.Literatures.Add(entityLiterature);
             await _context.SaveChangesAsync();
 
-            return CreatedAtAction("GetLiterature", new { id = literature.Id }, literature);
+            return CreatedAtAction("GetLiterature", new { id = entityLiterature.Id }, literature);
         }
 
         // DELETE: api/Literatures/5
