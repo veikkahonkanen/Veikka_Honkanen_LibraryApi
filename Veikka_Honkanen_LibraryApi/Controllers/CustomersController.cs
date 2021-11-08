@@ -103,6 +103,7 @@ namespace Veikka_Honkanen_LibraryApi.Controllers
         // Bonus 2
         // POST: api/Customers/SetLoanBanForCustomer/{customerId}/{booleanValue}
         [HttpPost("api/Customers/SetLoanBanForCustomer/{customerId}/{booleanValue}")]
+        [AuthorizationAttribute]
         public async Task<IActionResult> SetLoanBanForCustomer(long customerId, bool booleanValue)
         {
             var customerEntity = await _context.Customers
@@ -118,7 +119,7 @@ namespace Veikka_Honkanen_LibraryApi.Controllers
 
         // DELETE: api/Customers/5
         [HttpDelete("{id}")]
-        //[AuthorizationAttribute] // Bonus 2
+        [AuthorizationAttribute] // Bonus 2
         public async Task<IActionResult> DeleteCustomer(long id)
         {
             var customer = await _context.Customers.FindAsync(id);
