@@ -38,6 +38,38 @@ namespace Veikka_Honkanen_LibraryApi.Controllers
                 .ToListAsync();
         }
 
+        // GET: api/Literatures/SearchForLiterature
+        [HttpGet("/SearchForLiterature")]
+        // Params alignment was done using Visual Studio's tools, as Microsoft instructed here:
+        // https://docs.microsoft.com/en-us/visualstudio/ide/reference/wrap-indent-align-refactorings?view=vs-2019#wrap-indent-and-align-parameters-or-arguments
+        public async Task<ActionResult<IEnumerable<LiteratureDtoOut>>> SearchForLiterature(string? title,
+                                                                                           string? subjectName,
+                                                                                           string? publisherName,
+                                                                                           string? manufacturerName,
+                                                                                           long? yearOfRelease)
+        {
+            // The dbcontext query filtering implementation was inspired by looking at Tim's answer, https://stackoverflow.com/a/32412831
+            var literatures = await _context.Literatures
+                .Where(literature =>
+                (string.IsNullOrEmpty(title) || literature.Title == title)
+                && (string.IsNullOrEmpty(subjectName) || literature.Subjects.Any(subject => subject.Name == subjectName))
+                && (string.IsNullOrEmpty(publisherName) || literature.Publisher.Name == publisherName)
+                && (string.IsNullOrEmpty(manufacturerName) || literature.Manufacturer == manufacturerName)
+                && (yearOfRelease == null || literature.YearOfRelease == yearOfRelease))
+                .Include(literature => literature.Authors).ThenInclude(author => author.Person)
+                .Include(literature => literature.Publisher)
+                .Include(literature => literature.Subjects)
+                .ProjectTo<LiteratureDtoOut>(_mapper.ConfigurationProvider)
+                .ToListAsync();
+
+            if (literatures == null)
+            {
+                return NotFound();
+            }
+
+            return literatures;
+        }
+
         // GET: api/Literatures/5
         [HttpGet("{id}")]
         public async Task<ActionResult<LiteratureDtoOut>> GetLiterature(long id)
