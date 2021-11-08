@@ -32,9 +32,7 @@ namespace Veikka_Honkanen_LibraryApi
 
             services.AddControllers();
 
-            services.AddDbContext<LibraryContext>(opt => opt.UseInMemoryDatabase("LibraryList"));
-
-            // services.AddDbContext<LibraryContext>(opt => opt.UseSqlServer(@"Server=(localdb)\mssqllocaldb;Database=LibraryDbVeHo;Trusted_Connection=True;"));
+            services.AddDbContext<LibraryContext>(opt => opt.UseSqlServer(@"Server=(localdb)\mssqllocaldb;Database=LibraryDbVeHo;Trusted_Connection=True;"));
 
             services.AddSwaggerGen(c =>
             {
