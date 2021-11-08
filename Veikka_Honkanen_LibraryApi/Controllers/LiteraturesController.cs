@@ -122,6 +122,96 @@ namespace Veikka_Honkanen_LibraryApi.Controllers
             return NoContent();
         }
 
+        // Bonus 1
+        // POST: api/Literatures/BorrowLiterature/{literatureId}/{customerId}
+        [HttpPost("/BorrowLiterature/{literatureId}/{customerId}")]
+        public async Task<IActionResult> BorrowLiterature(long literatureId, long customerId)
+        {
+            var literatureEntity = await _context.Literatures.SingleOrDefaultAsync(literature => literature.Id == literatureId);
+
+            var customerEntity = await _context.Customers
+                .Include(customer => customer.Person)?
+                .Include(customer => customer.Loans)?
+                .SingleOrDefaultAsync(customer => customer.Id == customerId);
+
+            if (literatureEntity == null || customerEntity == null)
+            {
+                return StatusCode(404, "Customer or literature not found.");
+            }
+
+            if (customerEntity.IsLoanBanned)
+            {
+                
+                return StatusCode(403, "Customer is banned from borrowing.");
+            }
+
+            if (literatureEntity.AvailableCopies == 0)
+            {
+
+                return StatusCode(403, "There are no available copies of this literature left.");
+            }
+
+            if (customerEntity.Loans.Any(loan => DateTime.Compare(loan.DateDue, DateTime.UtcNow) > 0))
+            {
+
+                return StatusCode(403, "Customer has loans due.");
+            }
+
+            var loan = new Loan()
+            {
+                LiteratureId = literatureId,
+                CustomerId = customerId,
+                DateBorrowed = DateTime.UtcNow,
+                DateDue = DateTime.UtcNow.AddMonths(1)
+            };
+
+            literatureEntity.AvailableCopies--;
+
+            customerEntity.Loans.Add(loan);
+
+            _context.Loans.Add(loan);
+
+            await _context.SaveChangesAsync();
+
+            return StatusCode(200, $"{customerEntity.Person.FirstName} {customerEntity.Person.LastName} has successfully borrowed {literatureEntity.Title}. " +
+                $"The due date of the loan is {loan.DateDue} UTC."); ;
+        }
+
+        // Bonus 1
+        // POST: api/Literatures/ReturnLoanOfLiterature/{literatureId}/{customerId}
+        [HttpPost("/ReturnLoanOfLiterature/{loanId}")]
+        public async Task<IActionResult> ReturnLoanOfLiterature(long loanId)
+        {
+            var loan = await _context.Loans.SingleOrDefaultAsync(loan => loan.Id == loanId);
+
+            if (loan == null)
+            {
+                return StatusCode(404, "Loan not found.");
+            }
+
+            var literatureEntity = await _context.Literatures.SingleOrDefaultAsync(literature => literature.Id == loan.LiteratureId);
+
+            var customerEntity = await _context.Customers
+                .Include(customer => customer.Person)?
+                .Include(customer => customer.Loans)?
+                .SingleOrDefaultAsync(customer => customer.Id == loan.CustomerId);
+
+            if (literatureEntity == null || customerEntity == null)
+            {
+                return StatusCode(404, "Customer or literature not found.");
+            }
+
+            literatureEntity.AvailableCopies++;
+
+            customerEntity.Loans.Remove(loan);
+
+            _context.Loans.Remove(loan);
+
+            await _context.SaveChangesAsync();
+
+            return StatusCode(200, "Loan of literature has been succesfully returned.");
+        }
+
         // POST: api/Literatures
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]

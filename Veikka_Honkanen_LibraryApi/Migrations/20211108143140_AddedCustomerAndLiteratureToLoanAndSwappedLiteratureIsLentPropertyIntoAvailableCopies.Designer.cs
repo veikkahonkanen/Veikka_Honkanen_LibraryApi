@@ -3,15 +3,17 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Veikka_Honkanen_LibraryApi.Models;
 
 namespace Veikka_Honkanen_LibraryApi.Migrations
 {
     [DbContext(typeof(LibraryContext))]
-    partial class LibraryContextModelSnapshot : ModelSnapshot
+    [Migration("20211108143140_AddedCustomerAndLiteratureToLoanAndSwappedLiteratureIsLentPropertyIntoAvailableCopies")]
+    partial class AddedCustomerAndLiteratureToLoanAndSwappedLiteratureIsLentPropertyIntoAvailableCopies
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -180,6 +182,8 @@ namespace Veikka_Honkanen_LibraryApi.Migrations
 
                     b.HasIndex("CustomerId");
 
+                    b.HasIndex("LiteratureId");
+
                     b.ToTable("Loans");
                 });
 
@@ -294,11 +298,21 @@ namespace Veikka_Honkanen_LibraryApi.Migrations
 
             modelBuilder.Entity("Veikka_Honkanen_LibraryApi.Models.Loan", b =>
                 {
-                    b.HasOne("Veikka_Honkanen_LibraryApi.Models.Customer", null)
+                    b.HasOne("Veikka_Honkanen_LibraryApi.Models.Customer", "Customer")
                         .WithMany("Loans")
                         .HasForeignKey("CustomerId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.HasOne("Veikka_Honkanen_LibraryApi.Models.Literature", "Literature")
+                        .WithMany()
+                        .HasForeignKey("LiteratureId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Customer");
+
+                    b.Navigation("Literature");
                 });
 
             modelBuilder.Entity("Veikka_Honkanen_LibraryApi.Models.Subject", b =>

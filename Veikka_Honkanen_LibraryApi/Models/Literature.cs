@@ -43,6 +43,6 @@ namespace Veikka_Honkanen_LibraryApi.Models
         public string Isbn { get; set; }
 
         // Bonus 1
-        public bool IsLent { get; set; }
+        public long AvailableCopies { get; set; }
     }
 }

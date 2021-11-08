@@ -93,7 +93,7 @@ namespace Veikka_Honkanen_LibraryApi
                 Manufacturer = "Putnam",
                 AdditionalInformation = "",
                 Isbn = "978-0399110436",
-                IsLent = false
+                AvailableCopies = 1
             };
 
             context.Literatures.Add(book1);
@@ -152,7 +152,7 @@ namespace Veikka_Honkanen_LibraryApi
                 Manufacturer = "Arthur A. Levine Books",
                 AdditionalInformation = "Reading age: 9 - 12 years",
                 Isbn = "978-0439358064",
-                IsLent = false
+                AvailableCopies = 1
             };
 
             context.Literatures.Add(book2);
