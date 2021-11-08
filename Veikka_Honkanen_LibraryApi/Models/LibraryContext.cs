@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Veikka_Honkanen_LibraryApi.Models
@@ -26,5 +27,42 @@ namespace Veikka_Honkanen_LibraryApi.Models
         public DbSet<Literature> Literatures { get; set; }
 
         public DbSet<Customer> Customers { get; set; }
+
+        public override int SaveChanges()
+        {
+            AddTimeStamps();
+            return base.SaveChanges();
+        }
+
+        public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
+        {
+            AddTimeStamps();
+            return await base.SaveChangesAsync(cancellationToken);
+        }
+
+        private void AddTimeStamps()
+        {
+            var entities = ChangeTracker.Entries()
+                .Where(x => x.Entity is BaseModel && (x.State == EntityState.Added || x.State == EntityState.Modified));
+
+            if (entities.Any())
+            {
+                return;
+            }
+
+            var now = DateTime.UtcNow;
+
+            foreach (var entity in entities)
+            {
+                var baseModel = (BaseModel)entity.Entity;
+
+                if (entity.State == EntityState.Added)
+                {
+                    baseModel.CreatedAt = now;
+                }
+
+                baseModel.UpdatedAt = now;
+            }
+        }
     }
 }
