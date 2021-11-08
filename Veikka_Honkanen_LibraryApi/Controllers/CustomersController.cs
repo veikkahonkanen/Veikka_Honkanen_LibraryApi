@@ -100,8 +100,25 @@ namespace Veikka_Honkanen_LibraryApi.Controllers
             return CreatedAtAction("GetCustomer", new { id = entityCustomer.Id }, customer);
         }
 
+        // Bonus 2
+        // POST: api/Customers/SetLoanBanForCustomer/{customerId}/{booleanValue}
+        [HttpPost("api/Customers/SetLoanBanForCustomer/{customerId}/{booleanValue}")]
+        public async Task<IActionResult> SetLoanBanForCustomer(long customerId, bool booleanValue)
+        {
+            var customerEntity = await _context.Customers
+                .Include(customer => customer.Person)?
+                .SingleOrDefaultAsync(customer => customer.Id == customerId);
+
+            customerEntity.IsLoanBanned = booleanValue;
+
+            await _context.SaveChangesAsync();
+
+            return StatusCode(200, $"Loan ban of {customerEntity.Person.FirstName} {customerEntity.Person.LastName} has been set to {booleanValue}.");
+        }
+
         // DELETE: api/Customers/5
         [HttpDelete("{id}")]
+        //[AuthorizationAttribute] // Bonus 2
         public async Task<IActionResult> DeleteCustomer(long id)
         {
             var customer = await _context.Customers.FindAsync(id);

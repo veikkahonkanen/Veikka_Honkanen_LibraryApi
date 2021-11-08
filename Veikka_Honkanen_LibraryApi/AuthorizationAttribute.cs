@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 
 namespace Veikka_Honkanen_LibraryApi
 {
+    // Bonus 2
     [AttributeUsage(AttributeTargets.Class | AttributeTargets.Method)]
     public class AuthorizationAttribute : Attribute, IResourceFilter
     {
