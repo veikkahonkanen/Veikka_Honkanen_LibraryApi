@@ -13,9 +13,25 @@ namespace Veikka_Honkanen_LibraryApi
 {
     public class Program
     {
+        private static IServiceScopeFactory ssf;
         public static void Main(string[] args)
         {
-            var host = CreateHostBuilder(args).Build();
+            
+            var host = CreateHostBuilder(args)
+                 .ConfigureServices((hostContext, services) =>
+                 {
+                     // Bonus 3
+                     // Microsoft's injection example the code below is based on:
+                     // https://github.com/dotnet/AspNetCore.Docs/blob/main/aspnetcore/fundamentals/host/hosted-services/samples/3.x/BackgroundTasksSample/Program.cs
+                     services.AddSingleton<LoanChecker>();
+
+                     services.AddSingleton<IBackgroundTaskQueue>(ctx => {
+                         if (!int.TryParse(hostContext.Configuration["QueueCapacity"], out var queueCapacity))
+                             queueCapacity = 100;
+                         return new BackgroundTaskQueue(queueCapacity);
+                     });
+                 })
+                .Build();
 
             using (var scope = host.Services.CreateScope())
             {
@@ -27,6 +43,11 @@ namespace Veikka_Honkanen_LibraryApi
                 GenerateLiteratureData(context);
 
                 GenerateCustomerData(context);
+
+                // Bonus 3
+                var loanChecker = host.Services.GetRequiredService<LoanChecker>();
+
+                loanChecker.StartLoanCheckerTask(context);
 
                 context.SaveChanges();
             }

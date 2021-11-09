@@ -1,4 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -9,34 +12,44 @@ using Veikka_Honkanen_LibraryApi.Models;
 namespace Veikka_Honkanen_LibraryApi
 {
     // Bonus 3
+    // The background task structure was based on Microsoft's example at:
+    // https://github.com/dotnet/AspNetCore.Docs/blob/main/aspnetcore/fundamentals/host/hosted-services/samples/3.x/BackgroundTasksSample/Services/MonitorLoop.cs
+    
     /// <summary>
     /// Checks if a customer's loan is about to end and sends reminders
     /// </summary>
     public class LoanChecker
     {
-        private readonly LibraryContext _context;
+        private readonly IBackgroundTaskQueue _taskQueue;
+        private readonly ILogger _logger;
+        private readonly CancellationToken _cancellationToken;
+        private LibraryContext _context;
 
-        public LoanChecker(LibraryContext context)
+        public LoanChecker(IBackgroundTaskQueue taskQueue, ILogger<LoanChecker> logger, IHostApplicationLifetime applicationLifetime)
         {
-            _context = context;
+            _taskQueue = taskQueue;
+            _logger = logger;
+            _cancellationToken = applicationLifetime.ApplicationStopping;
         }
 
         /// <summary>
         /// Starts loan checker background task
         /// </summary>
-        public void StartLoanCheckerTask()
+        public async void StartLoanCheckerTask(LibraryContext context)
         {
-            // Multithreading the task to run in the background. Made by looking at LVBen's answer on https://stackoverflow.com/a/33713442
-            var ts = new ThreadStart(CheckLoans);
-            var thread = new Thread(ts);
-            thread.Start();
+            _context = context;
+
+            while (!_cancellationToken.IsCancellationRequested)
+            {
+                await _taskQueue.QueueBackgroundWorkItemAsync(CheckLoansTask);
+            }
         }
 
-        private void CheckLoans()
+        private async ValueTask CheckLoansTask(CancellationToken token)
         {
             var loans = _context.Loans.ToList();
 
-            while (loans != null) // Always true, therefore always running
+            while (!token.IsCancellationRequested)
             {
                 // The reminders start from a 7-day countdown, and those days need to be substracted from the due date
                 var days = -7;
@@ -64,12 +77,12 @@ namespace Veikka_Honkanen_LibraryApi
 
                             if (customer != null && days < 0)
                             {
-                                Console.WriteLine($"A reminder has been sent to customer {customer.Person.FirstName} {customer.Person.LastName}");
+                                _logger.LogInformation($"A reminder has been sent to customer {customer.Person.FirstName} {customer.Person.LastName}");
                             }
 
                             if (customer != null && days == 0)
                             {
-                                Console.WriteLine($"The loan span of customer {customer.Person.FirstName} {customer.Person.LastName} has expired.");
+                                _logger.LogInformation($"The loan span of customer {customer.Person.FirstName} {customer.Person.LastName} has expired.");
                             }
                         }
                     }

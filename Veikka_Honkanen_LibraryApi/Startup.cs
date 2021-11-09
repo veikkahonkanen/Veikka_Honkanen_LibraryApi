@@ -29,7 +29,6 @@ namespace Veikka_Honkanen_LibraryApi
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-
             services.AddControllers();
 
             services.AddDbContext<LibraryContext>(opt => opt.UseSqlServer(@"Server=(localdb)\mssqllocaldb;Database=LibraryDbVeHo;Trusted_Connection=True;"));
@@ -40,6 +39,9 @@ namespace Veikka_Honkanen_LibraryApi
             });
 
             services.AddAutoMapper(Assembly.GetExecutingAssembly());
+
+            // Bonus 3
+            services.AddSingleton<LoanChecker>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
