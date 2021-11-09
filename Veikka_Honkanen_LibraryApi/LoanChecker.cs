@@ -1,5 +1,4 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using System;
@@ -14,10 +13,6 @@ namespace Veikka_Honkanen_LibraryApi
     // Bonus 3
     // The background task structure was based on Microsoft's example at:
     // https://github.com/dotnet/AspNetCore.Docs/blob/main/aspnetcore/fundamentals/host/hosted-services/samples/3.x/BackgroundTasksSample/Services/MonitorLoop.cs
-    
-    /// <summary>
-    /// Checks if a customer's loan is about to end and sends reminders
-    /// </summary>
     public class LoanChecker
     {
         private readonly IBackgroundTaskQueue _taskQueue;
@@ -25,6 +20,12 @@ namespace Veikka_Honkanen_LibraryApi
         private readonly CancellationToken _cancellationToken;
         private LibraryContext _context;
 
+        /// <summary>
+        /// Checks if a customer's loan is about to end and sends reminders
+        /// </summary>
+        /// <param name="taskQueue">task queue</param>
+        /// <param name="logger">logger</param>
+        /// <param name="applicationLifetime">application lifetime</param>
         public LoanChecker(IBackgroundTaskQueue taskQueue, ILogger<LoanChecker> logger, IHostApplicationLifetime applicationLifetime)
         {
             _taskQueue = taskQueue;
@@ -35,6 +36,7 @@ namespace Veikka_Honkanen_LibraryApi
         /// <summary>
         /// Starts loan checker background task
         /// </summary>
+        /// <param name="context">Library context</param>
         public async void StartLoanCheckerTask(LibraryContext context)
         {
             _context = context;
@@ -45,6 +47,11 @@ namespace Veikka_Honkanen_LibraryApi
             }
         }
 
+        /// <summary>
+        /// Check loan task that is run in the background
+        /// </summary>
+        /// <param name="token">cancellation token</param>
+        /// <returns>void</returns>
         private async ValueTask CheckLoansTask(CancellationToken token)
         {
             var loans = _context.Loans.ToList();
